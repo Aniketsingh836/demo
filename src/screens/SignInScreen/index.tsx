@@ -101,7 +101,7 @@ const SignInScreen: React.FC = () => {
       <TouchableOpacity
         style={[
           styles.button,
-          {backgroundColor: loginEnabled ? '#db3536' : '#f0b2b2'},
+          {backgroundColor: loginEnabled ? '#db3536' : 'lightgrey'},
         ]}
         onPress={handleLogin}
         disabled={!loginEnabled}>
