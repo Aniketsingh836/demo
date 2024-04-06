@@ -10,7 +10,6 @@ import {
   ScrollView,
   Linking,
 } from 'react-native';
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SignInScreen: React.FC = () => {
@@ -21,32 +20,23 @@ const SignInScreen: React.FC = () => {
   const [loginEnabled, setLoginEnabled] = useState(false);
 
   useEffect(() => {
-    validateSession();
     updateLoginButtonState(username, password);
   }, [username, password]);
+
   const contactUsLink = 'https://t.me/talktousgod';
 
   const handleContactUs = () => {
     Linking.openURL(contactUsLink);
   };
+
   const handleLogin = async () => {
     try {
-      const response = await axios.post(
-        'https://server-j98j.onrender.com/api/login',
-        {
-          username: username,
-          key: password,
-        },
-      );
-      const responseData = response.data;
-      console.log('RESPONSE', responseData);
-      if (responseData.message === 'User is valid.') {
-        const sessionToken = responseData.sessionToken;
-        await AsyncStorage.setItem('token', sessionToken);
-        navigation.navigate('Dashboard');
-      } else {
-        setErrorMessage('Invalid username or password.');
-      }
+      // Simulate login
+      const sessionToken = `session_token_${Math.random()
+        .toString(36)
+        .substring(7)}`;
+      await AsyncStorage.setItem('token', sessionToken);
+      navigation.navigate('Dashboard');
     } catch (error) {
       console.error('Error:', error);
       setErrorMessage('Failed to log in. Please try again later.');
@@ -63,29 +53,6 @@ const SignInScreen: React.FC = () => {
 
   const updateLoginButtonState = (username: string, password: string) => {
     setLoginEnabled(username.trim() !== '' && password.trim() !== '');
-  };
-
-  const validateSession = async () => {
-    try {
-      const sessionToken = await AsyncStorage.getItem('token');
-      if (sessionToken) {
-        const response = await axios.get(
-          'https://server-j98j.onrender.com/api/validate-session',
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${sessionToken}`,
-            },
-          },
-        );
-        console.log('SESSION TOKEN RES', response);
-        if (response.data.valid) {
-          navigation.navigate('Dashboard');
-        }
-      }
-    } catch (error) {
-      console.error('Error validating session:', error);
-    }
   };
 
   return (
