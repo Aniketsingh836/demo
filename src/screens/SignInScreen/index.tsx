@@ -23,6 +23,11 @@ const SignInScreen: React.FC = () => {
     updateLoginButtonState(username, password);
   }, [username, password]);
 
+  useEffect(() => {
+    // Check if session is expired or still valid when the component mounts
+    checkSessionValidity();
+  }, []);
+
   const contactUsLink = 'https://t.me/talktousgod';
 
   const handleContactUs = () => {
@@ -31,12 +36,29 @@ const SignInScreen: React.FC = () => {
 
   const handleLogin = async () => {
     try {
-      // Simulate login
-      const sessionToken = `session_token_${Math.random()
-        .toString(36)
-        .substring(7)}`;
-      await AsyncStorage.setItem('token', sessionToken);
-      navigation.navigate('Dashboard');
+      const response = await fetch(
+        'https://server-j98j.onrender.com/api/login',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: username,
+            key: password,
+          }),
+        },
+      );
+
+      const data = await response.json();
+      console.log('I AM RES', data);
+      if (response.ok) {
+        await AsyncStorage.setItem('token', data.sessionToken);
+        await AsyncStorage.setItem('expiration', data.sessionExpires);
+        navigation.navigate('Dashboard');
+      } else {
+        setErrorMessage(data.message);
+      }
     } catch (error) {
       console.error('Error:', error);
       setErrorMessage('Failed to log in. Please try again later.');
@@ -53,6 +75,34 @@ const SignInScreen: React.FC = () => {
 
   const updateLoginButtonState = (username: string, password: string) => {
     setLoginEnabled(username.trim() !== '' && password.trim() !== '');
+  };
+
+  const checkSessionValidity = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        const response = await fetch(
+          'https://server-j98j.onrender.com/api/validate-session',
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        const data = await response.json();
+        if (!response.ok || !data.valid) {
+          // Clear invalid session data
+          await AsyncStorage.removeItem('token');
+          await AsyncStorage.removeItem('expiration');
+        } else {
+          // Session is valid, navigate to Dashboard
+          navigation.navigate('Dashboard');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking session validity:', error);
+    }
   };
 
   return (
