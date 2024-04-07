@@ -221,6 +221,8 @@ const Dashboard: React.FC = () => {
                 value={periodId}
                 onChangeText={handlePeriodIdChange}
                 editable={!inputDisabled && disableTime === 0}
+                keyboardType="numeric" // Display numeric keyboard
+                maxLength={4} // Limit input to 4 characters
               />
             </LinearGradient>
           </View>
