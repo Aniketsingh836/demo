@@ -51,7 +51,7 @@ const SignInScreen: React.FC = () => {
       );
 
       const data = await response.json();
-      console.log('I AM RES', data);
+      console.log('I AM RES', data.sessionExpires);
       if (response.ok) {
         await AsyncStorage.setItem('token', data.sessionToken);
         await AsyncStorage.setItem('expiration', data.sessionExpires);
@@ -80,25 +80,19 @@ const SignInScreen: React.FC = () => {
   const checkSessionValidity = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      if (token) {
-        const response = await fetch(
-          'https://server-j98j.onrender.com/api/validate-session',
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-        const data = await response.json();
-        if (!response.ok || !data.valid) {
-          // Clear invalid session data
+      const expiration = await AsyncStorage.getItem('expiration');
+      if (token && expiration) {
+        const expirationTime = new Date(expiration).getTime();
+        const currentTime = new Date().getTime();
+        if (currentTime > expirationTime) {
+          // Session has expired, clear session data and navigate to login screen
           await AsyncStorage.removeItem('token');
           await AsyncStorage.removeItem('expiration');
-        } else {
-          // Session is valid, navigate to Dashboard
-          navigation.navigate('Dashboard');
+          navigation.navigate('SignIn'); // Navigate to the login screen
+          return;
         }
+        // Session is still valid, navigate to Dashboard
+        navigation.navigate('Dashboard');
       }
     } catch (error) {
       console.error('Error checking session validity:', error);
